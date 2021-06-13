@@ -1,6 +1,5 @@
 const puppeteer = require("puppeteer-extra");
 const { exit, argv } = require("yargs");
-
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
 
@@ -79,9 +78,28 @@ const run = async () => {
       return element ? element.nextElementSibling.innerText : null;
     };
 
+    const getOptimizationEnabled = () => {
+      const elements = document.evaluate(
+        "//dt[contains(., 'Optimization enabled')]",
+        document,
+        null,
+        XPathResult.ANY_TYPE,
+        null
+      );
+
+      const element = elements.iterateNext();
+
+      return element
+        ? element.nextElementSibling.innerText === "true"
+          ? true
+          : false
+        : null;
+    };
+
     return {
       compilerVersion: getCompilerVersion(),
       evmVersion: getEVMVersion(),
+      optimizationEnabled: getOptimizationEnabled(),
       code: getCode(),
     };
   });
@@ -93,4 +111,8 @@ const run = async () => {
   exit(0);
 };
 
-run();
+try {
+  run();
+} catch (error) {
+  run();
+}
