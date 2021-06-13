@@ -1,3 +1,4 @@
+const chrome = require('chrome-aws-lambda');
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
@@ -5,6 +6,7 @@ puppeteer.use(StealthPlugin());
 module.exports = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: await chrome.executablePath,
   });
 
   const page = await browser.newPage();
