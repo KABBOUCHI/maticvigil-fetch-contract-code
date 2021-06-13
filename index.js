@@ -34,22 +34,59 @@ const run = async () => {
 
   await page.waitForSelector(".address-overview");
 
-  const sourceCode = await page.evaluate(() => {
-    const sourceCodes = document.evaluate(
-      "//h3[contains(., 'Contract source code')]",
-      document,
-      null,
-      XPathResult.ANY_TYPE,
-      null
-    );
-    const sourceCode = sourceCodes.iterateNext();
+  const data = await page.evaluate(() => {
+    const getCode = () => {
+      const sourceCodes = document.evaluate(
+        "//h3[contains(., 'Contract source code')]",
+        document,
+        null,
+        XPathResult.ANY_TYPE,
+        null
+      );
 
-    return sourceCode
-      ? sourceCode.nextElementSibling.getAttribute("data-clipboard-text")
-      : null;
+      const sourceCode = sourceCodes.iterateNext();
+
+      return sourceCode
+        ? sourceCode.nextElementSibling.getAttribute("data-clipboard-text")
+        : null;
+    };
+
+    const getCompilerVersion = () => {
+      const elements = document.evaluate(
+        "//dt[contains(., 'Compiler version')]",
+        document,
+        null,
+        XPathResult.ANY_TYPE,
+        null
+      );
+
+      const element = elements.iterateNext();
+
+      return element ? element.nextElementSibling.innerText : null;
+    };
+
+    const getEVMVersion = () => {
+      const elements = document.evaluate(
+        "//dt[contains(., 'EVM Version')]",
+        document,
+        null,
+        XPathResult.ANY_TYPE,
+        null
+      );
+
+      const element = elements.iterateNext();
+
+      return element ? element.nextElementSibling.innerText : null;
+    };
+
+    return {
+      compilerVersion: getCompilerVersion(),
+      evmVersion: getEVMVersion(),
+      code: getCode(),
+    };
   });
 
-  console.log(sourceCode);
+  console.log(data);
 
   browser.close();
 
