@@ -1,4 +1,5 @@
 const puppeteer = require("puppeteer-extra");
+const axios = require("axios");
 const { exit, argv } = require("yargs");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
@@ -33,7 +34,7 @@ const run = async () => {
 
   await page.waitForSelector(".address-overview");
 
-  const data = await page.evaluate(() => {
+  const contract = await page.evaluate(() => {
     const getCode = () => {
       const sourceCodes = document.evaluate(
         "//h3[contains(., 'Contract source code')]",
@@ -78,6 +79,20 @@ const run = async () => {
       return element ? element.nextElementSibling.innerText : null;
     };
 
+    const getContractName = () => {
+      const elements = document.evaluate(
+        "//dt[contains(., 'Contract Name')]",
+        document,
+        null,
+        XPathResult.ANY_TYPE,
+        null
+      );
+
+      const element = elements.iterateNext();
+
+      return element ? element.nextElementSibling.innerText : null;
+    };
+
     const getOptimizationEnabled = () => {
       const elements = document.evaluate(
         "//dt[contains(., 'Optimization enabled')]",
@@ -97,6 +112,8 @@ const run = async () => {
     };
 
     return {
+      contractAddress: document.querySelector("h3.contract-address").innerText,
+      contractName: getContractName(),
       compilerVersion: getCompilerVersion(),
       evmVersion: getEVMVersion(),
       optimizationEnabled: getOptimizationEnabled(),
@@ -104,7 +121,46 @@ const run = async () => {
     };
   });
 
-  console.log(data);
+  console.log(contract);
+
+  console.log({
+    apikey: "JQG7R3JJGGCMA9CY2S6ABN9KVB1T5VTYCB",
+    module: "contract",
+    action: "verifysourcecode",
+    contractname: contract.contractName,
+    contractAddress: contract.contractAddress,
+    sourceCode: contract.code,
+    codeformat: "solidity-single-file",
+    compilerversion: contract.compilerVersion,
+    optimizationUsed: contract.optimizationEnabled ? 1 : 0,
+    runs: 200,
+    evmVersion: contract.evmVersion,
+    licenseType: 3,
+  });
+
+  try {
+    const { data } = await axios.post(
+      "https://api.polygonscan.com/api",
+      new URLSearchParams({
+        apikey: "JQG7R3JJGGCMA9CY2S6ABN9KVB1T5VTYCB",
+        module: "contract",
+        action: "verifysourcecode",
+        contractname: contract.contractName,
+        contractAddress: contract.contractAddress,
+        sourceCode: contract.code,
+        codeformat: "solidity-single-file",
+        compilerversion: contract.compilerVersion,
+        optimizationUsed: contract.optimizationEnabled ? 1 : 0,
+        runs: 200,
+        evmVersion: contract.evmVersion,
+        licenseType: 3,
+      })
+    );
+
+    console.log(data);
+  } catch (error) {
+    console.log("Error: " + error.messsage);
+  }
 
   browser.close();
 
