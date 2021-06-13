@@ -158,6 +158,12 @@ const run = async () => {
     );
 
     console.log(data);
+
+    if (data.status == "1") {
+      console.log(
+        `https://api.polygonscan.com/api?apikey=JQG7R3JJGGCMA9CY2S6ABN9KVB1T5VTYCB&module=contract&action=checkverifystatus&guid=${data.result}`
+      );
+    }
   } catch (error) {
     console.log("Error: " + error.messsage);
   }
